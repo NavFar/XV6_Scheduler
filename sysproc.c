@@ -99,7 +99,7 @@ sys_getPerformanceData(void) {
     char *wtime = 0, *rtime = 0;
     argptr(0, &wtime, sizeof(int));
     argptr(1, &rtime, sizeof(int));
-    // *wtime = (proc->etime - proc->ctime) - proc->rtime;
-    // *rtime = proc->rtime;
+    *wtime = (proc->etime - proc->ctime) - proc->rtime;
+    *rtime = proc->rtime;
     return 0;
 }
