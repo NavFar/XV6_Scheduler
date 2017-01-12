@@ -176,6 +176,7 @@ UPROGS=\
 	_ppid\
 	_pid\
 	_test\
+	_waittest\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
