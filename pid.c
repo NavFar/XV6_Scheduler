@@ -5,6 +5,6 @@
 int
 main(int argc, char *argv[])
 {
-  printf(1,"%d%s",getppid(),"\n");
+  printf(1,"%d%s",getpid(),"\n");
   exit();
 }
