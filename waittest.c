@@ -41,6 +41,7 @@ waittest(void)
       foo();
       exit();
     }
+    wait();
     getPerformanceData(&wTime,&rTime);
      printf(1, "hi \n");
     printf(1, "wTime: %d rTime: %d \n",wTime,rTime);
