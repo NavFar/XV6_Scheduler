@@ -193,7 +193,7 @@ exit(void)
 
   if(proc == initproc)
     panic("init exiting");
-
+    proc->etime=ticks;
   // Close all open files.
   for(fd = 0; fd < NOFILE; fd++){
     if(proc->ofile[fd]){
@@ -225,6 +225,7 @@ exit(void)
   proc->state = ZOMBIE;
   sched();
   panic("zombie exit");
+
 }
 
 // Wait for a child process to exit and return its pid.
@@ -485,4 +486,52 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+int wait2(int * wtime,int* rtime){
+  struct proc *p;
+  int havekids, pid;
+
+  acquire(&ptable.lock);
+  for(;;){
+    // Scan through table looking for exited children.
+    havekids = 0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->parent != proc)
+        continue;
+      havekids = 1;
+      if(p->state == ZOMBIE){
+        // Found one.
+        pid = p->pid;
+        kfree(p->kstack);
+        p->kstack = 0;
+        freevm(p->pgdir);
+        p->pid = 0;
+        p->parent = 0;
+        p->name[0] = 0;
+        p->killed = 0;
+        p->state = UNUSED;
+        *wtime = (p->etime - p->ctime) - p->rtime;
+        *rtime = p->rtime;
+        release(&ptable.lock);
+        return pid;
+      }
+    }
+
+    // No point waiting if we don't have any children.
+    if(!havekids || proc->killed){
+      release(&ptable.lock);
+      return -1;
+    }
+
+    // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+    sleep(proc, &ptable.lock);  //DOC: wait-sleep
+  }
+
+
+
+
+
+
+
+
 }
