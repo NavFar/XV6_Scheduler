@@ -13,6 +13,8 @@ struct gatedesc idt[256];
 extern uint vectors[];  // in vectors.S: array of 256 entry pointers
 struct spinlock tickslock;
 uint ticks;
+// number of past quantoms
+
 
 void
 tvinit(void)
@@ -32,6 +34,7 @@ idtinit(void)
   lidt(idt, sizeof(idt));
 }
 
+uint quantomNumber = 0;
 //PAGEBREAK: 41
 void
 trap(struct trapframe *tf)
@@ -45,7 +48,7 @@ trap(struct trapframe *tf)
       exit();
     return;
   }
-
+  // cprintf("used quantom is : %d \n",quantomNumber);
   switch(tf->trapno){
   case T_IRQ0 + IRQ_TIMER:
     if(cpunum() == 0){
@@ -102,14 +105,30 @@ trap(struct trapframe *tf)
   // (If it is still executing in the kernel, let it keep running
   // until it gets to the regular system call return.)
   if(proc && proc->killed && (tf->cs&3) == DPL_USER)
-    exit();
+    {
+      quantomNumber = 0;
+      exit();
+    }
 
   // Force process to give up CPU on clock tick.
   // If interrupts were on while locks held, would need to check nlock.
   if(proc && proc->state == RUNNING && tf->trapno == T_IRQ0+IRQ_TIMER)
-    yield();
-
+  {
+    if(quantomNumber==QUANTA)
+    {
+      quantomNumber = 0;
+      yield();
+    }
+    else
+    {
+      quantomNumber++;
+      return;
+    }
+  }
   // Check if the process has been killed since we yielded
   if(proc && proc->killed && (tf->cs&3) == DPL_USER)
+  {
+    quantomNumber=0;
     exit();
+  }
 }
