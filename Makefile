@@ -216,9 +216,9 @@ ifndef CPUS
 CPUS := 2
 endif
 QEMUOPTS = -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -smp $(CPUS) -m 512 $(QEMUEXTRA)
-CHEDFLAG :=RR
+SCHEDFLAG :=RR
 qemu: fs.img xv6.img
-	echo $(CHEDFLAG);
+	./bash.sh $(SCHEDFLAG)
 	$(QEMU) -serial mon:stdio $(QEMUOPTS)
 
 qemu-memfs: xv6memfs.img

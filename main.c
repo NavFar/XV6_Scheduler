@@ -23,6 +23,7 @@ main(void)
   lapicinit();     // interrupt controller
   seginit();       // segment descriptors
   cprintf("\ncpu%d: starting xv6\n\n", cpunum());
+  // cprintf("this is what  it is %s \n",SCHFLAG);
   picinit();       // another interrupt controller
   ioapicinit();    // another interrupt controller
   consoleinit();   // console hardware
