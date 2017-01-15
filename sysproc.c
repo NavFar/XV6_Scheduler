@@ -102,3 +102,21 @@ sys_getPerformanceData(void) {
     argptr(1, &rtime, sizeof(int));
     return wait2((int*)wtime,(int*)rtime);
 }
+int
+sys_nice(void){
+  if (strncmp(SCHFLAG,"3Q",2)==0){
+  if(proc->prio<LOW)
+    proc->prio++;
+  else
+    return -1;
+  if(proc->prio==MIDDLE){
+    proc->order=0;
+    incOrder3Q();
+  }
+
+  return 0;
+}
+else{
+  return -1;
+}
+}

@@ -20,6 +20,14 @@ extern void trapret(void);
 
 static void wakeup1(void *chan);
 
+/////////////////////////queues
+struct proc * currentProc=(struct proc *)0;
+struct proc * lastProc=(struct proc *)0;
+void getNextProcess();
+void incOrder();
+void incOrder3Q();
+void addToQueue(struct proc* p);
+/////////////////////////
 void
 pinit(void)
 {
@@ -52,6 +60,7 @@ found:
   p->ctime = ticks;
   p->etime = -1;
   p->rtime = 0;
+  p->prio = HIGH;
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -112,6 +121,7 @@ userinit(void)
   acquire(&ptable.lock);
 
   p->state = RUNNABLE;
+  addToQueue(p);
 
   release(&ptable.lock);
 }
@@ -176,6 +186,7 @@ fork(void)
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
+  addToQueue(np);
 
   release(&ptable.lock);
 
@@ -282,7 +293,8 @@ wait(void)
 void
 scheduler(void)
 {
-  struct proc *p;
+  // struct proc *p;
+
 
   for(;;){
     // Enable interrupts on this processor.
@@ -290,23 +302,7 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
-
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
-      swtch(&cpu->scheduler, p->context);
-      switchkvm();
-
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      proc = 0;
-    }
+    getNextProcess();
     release(&ptable.lock);
 
   }
@@ -343,6 +339,7 @@ yield(void)
 {
   acquire(&ptable.lock);  //DOC: yieldlock
   proc->state = RUNNABLE;
+  addToQueue(proc);
   sched();
   release(&ptable.lock);
 }
@@ -415,7 +412,9 @@ wakeup1(void *chan)
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if(p->state == SLEEPING && p->chan == chan)
-      p->state = RUNNABLE;
+      {p->state = RUNNABLE;
+      addToQueue(p);
+      }
 }
 
 // Wake up all processes sleeping on chan.
@@ -441,8 +440,10 @@ kill(int pid)
       p->killed = 1;
       p->etime = ticks;
       // Wake process from sleep if necessary.
-      if(p->state == SLEEPING)
+      if(p->state == SLEEPING){
         p->state = RUNNABLE;
+        addToQueue(p);
+        }
       release(&ptable.lock);
       return 0;
     }
@@ -526,12 +527,188 @@ int wait2(int * wtime,int* rtime){
     // Wait for children to exit.  (See wakeup1 call in proc_exit.)
     sleep(proc, &ptable.lock);  //DOC: wait-sleep
   }
+}
+void getNextProcess(){
+  char * flag=SCHFLAG;
+  struct proc *p=0;
+  if(strncmp(flag,"RR",2)==0){
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->state != RUNNABLE)
+        continue;
+        proc = p;
+        switchuvm(p);
+        p->state = RUNNING;
+        swtch(&cpu->scheduler, p->context);
+        switchkvm();
+        // Process is done running for now.
+        // It should have changed its p->state before coming back.
+        proc = 0;
+      break;
+    }
 
+  }else if (strncmp(flag,"FRR",3)==0){
+    uint max = 0;
+    struct proc *selected=(struct proc *)0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->state != RUNNABLE)
+        continue;
+      if(!p->order){
 
+        p->order=0;
+      }
+      if(max<(p->order)){
+        selected=p;
+        max=p->order;
+      }
+    }
 
+    if(selected!=(struct proc *)0){
+    p=selected;
+    proc = p;
+    switchuvm(p);
+    p->state = RUNNING;
+    swtch(&cpu->scheduler, p->context);
+    switchkvm();
+    // Process is done running for now.
+    // It should have changed its p->state before coming back.
+    proc = 0;
+    p->order=0;
+    incOrder();
+  }
 
+  }
+  else if(strncmp(flag,"GRT",3)==0){
+    double min = 0;
+    // cprintf("Hell\n");
+    uint bot=0;
+    double result=0;
+    struct proc *selected=(struct proc *)0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->state != RUNNABLE)
+        continue;
+      bot=ticks-p->ctime;
+      if(bot==0)
+      {
+        result=0;
+      }
+      else{
+        result=(double)(p->rtime/bot);
+      }
+      if(min>=result){
+        selected=p;
+        min=result;
+      }
+    }
+    if(selected!=(struct proc *)0){
+    p=selected;
+    proc = p;
+    switchuvm(p);
+    p->state = RUNNING;
+    swtch(&cpu->scheduler, p->context);
+    switchkvm();
+    // Process is done running for now.
+    // It should have changed its p->state before coming back.
+    proc = 0;
+  }
+}else if(strncmp(flag,"3Q",2)==0){
+  //////////////start for search in first priority HIGHT
+  double min = 0;
+  uint bot=0;
+  double result=0;
+  struct proc *selected=(struct proc *)0;
+  uint max = 0;
 
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state != RUNNABLE||p->prio!=HIGH)
+      continue;
+    bot=ticks-p->ctime;
+    if(bot==0)
+    {
+      result=0;
+    }
+    else{
+      result=(double)(p->rtime/bot);
+    }
+    if(min>=result){
+      selected=p;
+      min=result;
+    }
+  }
+  //////////////find nothing in HIGH priority
+  if(selected==(struct proc *)0){
+  //////////////start for search in second priority MIDDLE
+  selected=(struct proc *)0;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state != RUNNABLE||p->prio!=MIDDLE)
+      continue;
+    if(!p->order){
+      p->order=0;
+    }
+    if(max<(p->order)){
+      selected=p;
+      max=p->order;
+    }
+  }
+  //////////////find nothing in MIDDLE priority
+  if(selected==(struct proc *)0){
+  //////////////start for search in third priority LOW
+  selected=(struct proc *)0;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state != RUNNABLE||p->prio!=LOW)
+      continue;
+    selected=p;
+    }
+  }
+  }
+  if(selected!=(struct proc *)0){
+    p=selected;
+    proc = p;
+    switchuvm(p);
+    p->state = RUNNING;
+    swtch(&cpu->scheduler, p->context);
+    switchkvm();
+    // Process is done running for now.
+    // It should have changed its p->state before coming back.
+    proc = 0;
+    if(p->prio==MIDDLE){
+      p->order=0;
+      incOrder3Q();
+    }
+  }
+}
+  return ;
+}
 
-
-
+void incOrder(){
+  struct proc * p;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state != RUNNABLE)
+      continue;
+    p->order++;
+  }
+  return;
+}
+void incOrder3Q(){
+  struct proc * p;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state != RUNNABLE||p->prio !=MIDDLE)
+      continue;
+    p->order++;
+  }
+  return;
+}
+void addToQueue(struct proc* input){
+  if (strncmp(SCHFLAG,"FRR",3)==0){
+    input->order=0;
+    incOrder();
+  }
+  else if (strncmp(SCHFLAG,"3Q",2)==0){
+    if(input->prio==MIDDLE)
+    {
+    input->order=0;
+    incOrder3Q();
+    }
+  }
+  // cprintf("Hell\n");
+  return;
 }

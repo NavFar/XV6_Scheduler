@@ -118,6 +118,10 @@ int             wait2(int*,int*);
 void            wakeup(void*);
 void            yield(void);
 
+void            getNextProcess();
+void            incOrder();
+void            incOrder3Q();
+void            addToQueue(struct proc* p);
 // swtch.S
 void            swtch(struct context**, struct context*);
 
@@ -185,3 +189,6 @@ void            clearpteu(pde_t *pgdir, char *uva);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
+
+//ulib.c
+void* malloc(uint);
