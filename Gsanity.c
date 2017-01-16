@@ -20,5 +20,9 @@ int main(int argc, char *argv[])
   for(int i=0;i<50;i++){
     printf(1,"Process %d is printing for the %d time(s)\n",getpid(),i);
   }
+  if(pid>0)
+  {
+    wait();
+  }
   exit();
 }
