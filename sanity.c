@@ -56,10 +56,11 @@ void parentWork(){
     allRtimes[j]=rtime;
   }
   for(int i=0;i<30;i++){
-    printf(1,"Process %d is in %d queue and has wait Time : %d & turn around time : %d \n",queue[i],((i+1)%3)+1,allWtimes[i],allWtimes[i]+allRtimes[i]);
+    printf(1,"\nProcess %d is in queue #%d  and has wait Time : %d & turn around time : %d",queue[i],((i+1)%3)+1,allWtimes[i],allWtimes[i]+allRtimes[i]);
     sumRtimes+=allRtimes[i];
     sumWtimes+=allWtimes[i];
   }
+  printf(1,"\n////////////////////////////////////////////////////////////\n");
   for(int i=2;i<5;i++){
     oneQueueRtime=0;
     oneQueueWtime=0;
@@ -72,10 +73,11 @@ void parentWork(){
     int trResult =(oneQueueWtime+oneQueueRtime)/10;
     int wResult = oneQueueWtime/10;
     // wResult=wResult;
-    printf(1,"%d queue average : wait time = %d \t turn around time = %d \n",i-1,wResult,trResult);
+    printf(1,"Queue #%d  average : wait time = %d \t turn around time = %d \n",i-1,wResult,trResult);
   }
   int trResult =(sumWtimes+sumRtimes)/30;
   int wResult = sumWtimes/30;
+  printf(1,"\n////////////////////////////////////////////////////////////\n");
   printf(1,"All queues average : wait time = %d \t turn around time = %d \n ",wResult,trResult);
 }
 void childWork(int cid){
