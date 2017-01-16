@@ -12,7 +12,8 @@ int main(int argc, char *argv[])
     }
   printf(1,"Father pid is %d\n",getpid());
   sleep(1000);
-  if(fork()<0){
+  int pid =fork();
+  if(pid<0){
     printf(1,"Error in forking :(\n");
     exit();
   }

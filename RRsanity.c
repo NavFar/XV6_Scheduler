@@ -49,6 +49,7 @@ void parentWork(){
   }
 
   for(int i=0;i<10;i++){
-    printf(1,"Parent prints child %d status--> running time :%d\t wait time : %d\t turn around time :%d \n",allPids[i],allRtimes[i],allWtimes[i],allRtimes[i]+allWtimes[i]);
+    printf(1,"Parent prints child %d status--> running time :%d \t wait time : %d \t turn around time :%d \n",allPids[i],allRtimes[i],allWtimes[i],allRtimes[i]+allWtimes[i]);
+    sleep(5);
   }
 }
