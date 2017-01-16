@@ -101,6 +101,9 @@ extern int sys_uptime(void);
 extern int sys_getppid(void);
 extern int sys_getPerformanceData(void);
 extern int sys_nice(void);
+extern int sys_startPrinting(void);
+extern int sys_endPrinting(void);
+
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
 [SYS_exit]    sys_exit,
@@ -126,6 +129,8 @@ static int (*syscalls[])(void) = {
 [SYS_getppid]  sys_getppid,
 [SYS_getPerformanceData]   sys_getPerformanceData,
 [SYS_nice]  sys_nice,
+[SYS_startPrinting]   sys_startPrinting,
+[SYS_endPrinting]     sys_endPrinting,
 };
 
 void

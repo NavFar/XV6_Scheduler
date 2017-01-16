@@ -120,3 +120,11 @@ else{
   return -1;
 }
 }
+int
+sys_startPrinting(void){
+  return starter();
+}
+int
+sys_endPrinting(void){
+  return ender();
+}

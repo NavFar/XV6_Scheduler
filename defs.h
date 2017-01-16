@@ -122,6 +122,8 @@ void            getNextProcess();
 void            incOrder();
 void            incOrder3Q();
 void            addToQueue(struct proc* p);
+int             starter(void);
+int             ender(void);
 // swtch.S
 void            swtch(struct context**, struct context*);
 

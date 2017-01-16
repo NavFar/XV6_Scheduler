@@ -14,6 +14,7 @@ struct {
 
 static struct proc *initproc;
 
+int printflag=0;
 int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
@@ -21,8 +22,7 @@ extern void trapret(void);
 static void wakeup1(void *chan);
 
 /////////////////////////queues
-struct proc * currentProc=(struct proc *)0;
-struct proc * lastProc=(struct proc *)0;
+void printQueue();
 void getNextProcess();
 void incOrder();
 void incOrder3Q();
@@ -565,6 +565,9 @@ void getNextProcess(){
     if(selected!=(struct proc *)0){
     p=selected;
     proc = p;
+    if(printflag){
+      printQueue();
+    }
     switchuvm(p);
     p->state = RUNNING;
     swtch(&cpu->scheduler, p->context);
@@ -572,6 +575,7 @@ void getNextProcess(){
     // Process is done running for now.
     // It should have changed its p->state before coming back.
     proc = 0;
+    // cprintf("State IS:%d \n",p->state);
     p->order=0;
     incOrder();
   }
@@ -711,4 +715,46 @@ void addToQueue(struct proc* input){
   }
   // cprintf("Hell\n");
   return;
+}
+int starter(void){
+  printflag=1;
+  return 1;
+}
+int ender(void){
+  printflag=0;
+  return 1;
+}
+void printQueue(){
+  uint orders[NPROC];
+  uint orderTemp;
+  int pids[NPROC];
+  int pidTemp;
+  int size=0;
+  struct proc * p;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state != RUNNABLE)//&&p->state != SLEEPING)
+    // if(!p)
+      continue;
+    orders[size]  =p->order;
+    pids[size]  =p->pid;
+    size++;
+  }
+
+  for(int i=0;i<size;i++){
+    for(int j=0;j<i;j++){
+      if(orders[i]<orders[j])
+      {
+        orderTemp=orders[j];
+        orders[j]=orders[i];
+        orders[i]=orderTemp;
+        pidTemp=pids[j];
+        pids[j]=pids[i];
+        pids[i]=pidTemp;
+      }
+    }
+  }
+  for(int i=size-1;i>=0;i--){
+    cprintf("%d,",pids[i]);
+  }
+  cprintf("\n");
 }

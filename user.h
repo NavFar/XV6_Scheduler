@@ -26,6 +26,8 @@ int uptime(void);
 int getppid(void);
 int getPerformanceData(int* wtime,int* rtime);
 int nice(void);
+int startPrinting(void);
+int endPrinting(void);
 
 // ulib.c
 int stat(char*, struct stat*);
